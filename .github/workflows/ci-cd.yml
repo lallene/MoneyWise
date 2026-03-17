@@ -1,0 +1,51 @@
+name: CI/CD MoneyWise
+
+# Déclenchement du workflow
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-deploy:
+    name: Build, Dockerize & Deploy
+    runs-on: self-hosted   # Utilisation du runner que tu as configuré
+    steps:
+      # 1️⃣ Checkout du code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2️⃣ Build Backend (Spring Boot)
+      - name: Build Backend
+        working-directory: ./backend
+        run: |
+          ./mvnw clean package -DskipTests
+
+      # 3️⃣ Build Frontend (Angular)
+      - name: Build Frontend
+        working-directory: ./frontend
+        run: |
+          npm install
+          npm run build -- --output-path=dist/browser
+
+      # 4️⃣ Build et tag des images Docker
+      - name: Build Docker Images
+        run: |
+          docker compose -f docker-compose.yml build
+
+      # 5️⃣ Déployer avec Docker Compose
+      - name: Deploy on Server
+        run: |
+          docker compose -f docker-compose.yml up -d
+
+      # 6️⃣ Vérification des conteneurs
+      - name: Check Docker Containers
+        run: |
+          docker ps
+          docker logs moneywise-frontend --tail 20
+          docker logs moneywise-backend --tail 20
+          docker logs moneywise-db --tail 20

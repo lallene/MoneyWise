@@ -1,0 +1,22 @@
+---
+- name: Déployer l'application MoneyWise
+  hosts: moneywise_server
+  become: yes
+  tasks:
+
+    - name: Créer le dossier /opt/moneywise
+      file:
+        path: /opt/moneywise
+        state: directory
+        mode: '0755'
+
+    - name: Cloner le repository MoneyWise
+      git:
+        repo: 'https://github.com/lallene/MoneyWise.git'
+        dest: /opt/moneywise
+        version: main # Assurez-vous que c'est la bonne branche
+        force: yes
+
+    - name: Lancer Docker Compose
+      shell: |
+        docker-compose -f /opt/moneywise/docker-compose.yml up -d --build

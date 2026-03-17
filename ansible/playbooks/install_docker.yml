@@ -1,0 +1,63 @@
+---
+- name: Installer Docker et Docker Compose sur MoneyWise-server
+  hosts: moneywise_server
+  become: yes
+  tasks:
+
+    - name: Mettre à jour le cache apt
+      apt:
+        update_cache: yes
+        force_apt_get: yes
+
+    - name: Installer les dépendances nécessaires
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - gnupg
+          - lsb-release
+        state: present
+
+    - name: Ajouter la clé GPG officielle de Docker
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Ajouter le repository Docker
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable"
+        state: present
+
+    - name: Installer Docker CE
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: present
+        update_cache: yes
+
+    - name: Démarrer et activer Docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Installer Docker Compose v2
+      get_url:
+        url: "https://github.com/docker/compose/releases/download/v2.23.1/docker-compose-{{ ansible_system | lower }}-{{ ansible_architecture }}"
+        dest: /usr/local/bin/docker-compose
+        mode: '0755'
+
+    - name: Vérifier les versions
+      shell: |
+        docker --version
+        docker-compose --version
+      register: versions
+      changed_when: false
+
+    - name: Afficher les versions installées
+      debug:
+        var: versions.stdout_lines

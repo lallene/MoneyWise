@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: moneywise-backend
+    ports:
+      - "8080:8080"
+    networks:
+      - moneywise-network
+    depends_on:
+      - db
+
+  frontend:
+    build: ./frontend
+    container_name: moneywise-frontend
+    ports:
+      - "80:80"
+    networks:
+      - moneywise-network
+    depends_on:
+      - backend
+
+  db:
+    image: mariadb:11
+    container_name: moneywise-db
+    environment:
+      MYSQL_ROOT_PASSWORD: RootPassword123!
+      MYSQL_DATABASE: moneywise
+      MYSQL_USER: moneywise
+      MYSQL_PASSWORD: MoneywisePass123!
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - moneywise-network
+
+volumes:
+  db-data:
+
+networks:
+  moneywise-network:
+    driver: bridge
